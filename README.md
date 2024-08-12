@@ -203,3 +203,6 @@ chain = prompt | llm.with_structured_output(schema)
 res = chain.invoke({"input": "기운이 없는 날이 계속되는것 같아요"})
 
 ```
+
+> 참조
+> [LangChain Concept prompt-templates](https://python.langchain.com/v0.2/docs/concepts/#prompt-templates)
