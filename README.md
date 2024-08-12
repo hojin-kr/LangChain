@@ -98,3 +98,108 @@ Questtion의 경우에 모델이 Context와 Response format을 통해 추론하�
 ```
 > 참조
 > [Google Gen AI 프롬프팅 전략 가이드](https://cloud.google.com/vertex-ai/generative-ai/docs/learn/prompts/prompt-design-strategies?hl=ko)
+
+## Prompt Template과 Response Schema
+LangChain의 Prompt Template과 Response Schema를 활용하면 프롬프트 전략을 편리하게 구사할 수 있으며 명확하게 프롬프트를 전달할 수 있습니다.
+
+### Prompt Template
+Prompt를 Tempalte으로 작성하여 System을 정의하고 퓨샷이나 질의를 정의하고 input으로 받도록 합니다.
+
+
+```
+# 간단한 예시
+prompt_template = ChatPromptTemplate.from_messages(
+    [
+        ("system", "You are a helpful assistant."),
+        ("user", "{input}"),
+    ]
+)
+prompt = prompt_template.format_prompt(input="Hello Gemini")
+
+```
+
+### Response Schema
+구조화된 반환을 정의합니다. 반환에 대한 속성을 지정하고 각 속성에 대한 설명을 추가합니다.
+
+```
+# 간단한 예시
+schema = {
+    "title": "Response",
+    "description": "The output of the prompt",
+    "type": "object",
+    "properties": {
+        "output": {
+            "type": "string",
+            "description": "The output of the prompt",
+        },
+        "reason": {
+            "type": "string",
+            "description": "The reason for the output",
+        }
+    }
+}
+```
+
+### Prompt Template과 Response Schema를 활용
+- system과 few-shot을 정의하고 유저로부터 입력 받은 Input을 전달합니다.
+- 구조화된 schema를 정의하고 해당 형태로 반환을 받습니다.
+
+[prompt Template과 Response Schema를 활용](sample/google-gemini-prompt-template-schema.py)   
+
+반환
+```
+.venv/bin/python sample/google-gemini-prompt-template-schema.py  
+
+[{'args': {'output': '힘든 날들이 계속되는 건 당연해요. 누구나 힘들 때가 있고, 그럴 땐 잠시 쉬어가는 것도 필요해요. 긍정적인 에너지를 찾아보고, 스스로에게 칭찬과 격려를 아끼지 마세요.', 'reason': '힘든 시기를 극복할 수 있도록 위로와 격려를 해줍니다.'}, 'type': 'Response'}]
+```
+
+```
+# prompt template
+prompt = ChatPromptTemplate.from_messages(
+    [
+        ("system", "심리 상담가인데, 모든 질문에 긍정적으로 답변해줘"),
+        (
+            "user",
+            [
+                {
+                    "type": "text",
+                    "text": "내일이 오는게 무서워요"
+                },
+                {
+                    "type": "text",
+                    "text": 
+                    """
+                        - output: 내일은 내일의 태양이 뜹니다. 긍정적으로 하루를 시작해보세요.
+                        - reason: 내일의 희망을 가질 수 있도록합니다.   
+                    """
+                },
+                {
+                    "type": "text",
+                    "text": "{input}"
+                }
+            ],
+         )
+    ]
+)
+
+# response schema
+schema = {
+    "title": "Response",
+    "description": "The output of the prompt",
+    "type": "object",
+    "properties": {
+        "output": {
+            "type": "string",
+            "description": "The output of the prompt",
+        },
+        "reason": {
+            "type": "string",
+            "description": "The reason for the output",
+        }
+    }
+}
+
+chain = prompt | llm.with_structured_output(schema)
+res = chain.invoke({"input": "기운이 없는 날이 계속되는것 같아요"})
+
+```
